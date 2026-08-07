@@ -741,11 +741,7 @@ export const handleLayout = (
     let gap = section % 2 === 0 ? section : section - 1;
     doc.body.setAttribute(
       "style",
-      `writing-mode: vertical-rl; text-orientation: mixed; height: ${
-        element.clientHeight + "px"
-      };width: 100%;overflow-y: hidden;overflow-x: hidden;padding-left: 0px;padding-right: 0px;margin: 0px;box-sizing: border-box;touch-action:none; overscroll-behavior: none;max-width: inherit;column-fill: auto;column-gap: ${gap}px; column-width: ${
-        (element.clientHeight - gap) / scale
-      }px;`
+      `writing-mode: vertical-rl; text-orientation: mixed; height: 100%;width: 100%;overflow-y: hidden;overflow-x: hidden;padding-left: 0px;padding-right: 0px;margin: 0px;box-sizing: border-box;touch-action:none; overscroll-behavior: none;max-width: inherit;column-fill: auto;column-gap: ${gap}px;column-count: ${scale};column-width: auto;`
     );
   } else {
     let section = Math.floor(element.clientWidth / 12);
@@ -753,11 +749,7 @@ export const handleLayout = (
     //ios 特殊处理否则平滑翻页有问题
     doc.body.setAttribute(
       "style",
-      `width: ${
-        element.clientWidth + "px"
-      };height: 100%;overflow-y: hidden;overflow-X: hidden;padding-left: 0px;padding-right: 0px;margin: 0px;box-sizing: border-box;touch-action:none; overscroll-behavior: none;max-width: inherit;column-fill: auto;column-gap: ${gap}px; column-width: ${
-        (element.clientWidth - gap) / scale
-      }px;`
+      `width: 100%;height: 100%;overflow-y: hidden;overflow-X: hidden;padding-left: 0px;padding-right: 0px;margin: 0px;box-sizing: border-box;touch-action:none; overscroll-behavior: none;max-width: inherit;column-fill: auto;column-gap: ${gap}px;column-count: ${scale};column-width: auto;`
     );
   }
 };
