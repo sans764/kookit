@@ -45,6 +45,19 @@ import {
   slideAnimateTo,
 } from "../utils/touchUtil";
 import { getBlockElement, isParentBlock } from "../utils/common";
+import {
+  applyWordDecorations as applyVocabularyDecorations,
+  applyWordDecorationsBatched as applyVocabularyDecorationsBatched,
+  clearWordDecorations as clearVocabularyDecorations,
+  refreshWordDecorations as refreshVocabularyDecorations,
+  selectWordDecoration as selectVocabularyDecoration,
+} from "../utils/wordDecorationUtil";
+import {
+  WordDecoration,
+  WordDecorationMap,
+  WordDecorationOptions,
+  WordSelectionScope,
+} from "../model/wordDecoration";
 declare var window: any;
 export interface TextRule {
   id: string;
@@ -57,6 +70,9 @@ export interface TextRule {
   bookName?: string;
 }
 class GeneralRender extends EventEmitter {
+  wordDecorationMap: WordDecorationMap | null = null;
+  wordDecorationOptions: WordDecorationOptions = {};
+  wordDecorationController: AbortController | null = null;
   readerMode: string;
   format: string;
   animation: string = "none";
@@ -1678,6 +1694,113 @@ class GeneralRender extends EventEmitter {
     let doc = this.getDocument();
     if (!doc) return;
     clearWordDefinitions(doc);
+  }
+  applyWordDecorations(
+    decorationMap: WordDecorationMap,
+    options: WordDecorationOptions = {}
+  ) {
+    const doc = this.getDocument();
+    if (!doc) return 0;
+    this.wordDecorationController?.abort();
+    const controller = new AbortController();
+    this.wordDecorationController = controller;
+    const abortFromCaller = () => controller.abort();
+    if (options.signal?.aborted) {
+      controller.abort();
+    } else {
+      options.signal?.addEventListener("abort", abortFromCaller, {
+        once: true,
+      });
+    }
+    this.wordDecorationMap = decorationMap;
+    this.wordDecorationOptions = options;
+    clearVocabularyDecorations(doc, options.rootElement);
+    const runOptions: WordDecorationOptions = {
+      ...options,
+      signal: controller.signal,
+      onWordClick: (payload) => {
+        options.onWordClick?.(payload);
+        this.trigger("word-click", [payload]);
+      },
+      onFirstBatch: (decoratedCount, processedNodeCount) => {
+        options.onFirstBatch?.(decoratedCount, processedNodeCount);
+        if (this.wordDecorationController === controller) {
+          this.trigger("chapter-learning-first-results", [
+            decoratedCount,
+            processedNodeCount,
+          ]);
+        }
+      },
+    };
+    const cleanup = () => {
+      options.signal?.removeEventListener("abort", abortFromCaller);
+      if (this.wordDecorationController === controller) {
+        this.wordDecorationController = null;
+      }
+    };
+    if (options.batchSize && options.batchSize > 0) {
+      return applyVocabularyDecorationsBatched(
+        decorationMap,
+        doc,
+        runOptions
+      )
+        .then((count) => {
+          if (!controller.signal.aborted) {
+            this.trigger("chapter-learning-ready", [count]);
+          }
+          return count;
+        })
+        .catch((error) => {
+          if (error?.name === "AbortError") return 0;
+          throw error;
+        })
+        .finally(cleanup);
+    }
+    try {
+      const count = applyVocabularyDecorations(
+        decorationMap,
+        doc,
+        runOptions
+      );
+      this.trigger("chapter-learning-ready", [count]);
+      return count;
+    } finally {
+      cleanup();
+    }
+  }
+  clearWordDecorations() {
+    this.wordDecorationController?.abort();
+    this.wordDecorationController = null;
+    const doc = this.getDocument();
+    if (!doc) return;
+    clearVocabularyDecorations(
+      doc,
+      this.wordDecorationOptions.rootElement
+    );
+  }  refreshWordDecorations(changedTerms: WordDecoration[]) {
+    const doc = this.getDocument();
+    if (!doc) return 0;
+    const refreshed = refreshVocabularyDecorations(
+      changedTerms,
+      doc,
+      this.wordDecorationOptions
+    );
+    if (this.wordDecorationMap) {
+      for (const decoration of changedTerms) {
+        const normalizedLemma = decoration.lemma.toLocaleLowerCase();
+        if (this.wordDecorationMap instanceof Map) {
+          this.wordDecorationMap.set(normalizedLemma, decoration);
+        } else {
+          this.wordDecorationMap[normalizedLemma] = decoration;
+        }
+      }
+    }
+    return refreshed;
+  }
+  selectWordDecoration(instanceId: string, scope: WordSelectionScope) {
+    const doc = this.getDocument();
+    if (!doc) return null;
+    return selectVocabularyDecoration(doc, instanceId, scope);
   }
 }
 export default GeneralRender;

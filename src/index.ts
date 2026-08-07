@@ -12,6 +12,24 @@ import HtmlRender from "./renders/HtmlRender";
 import BookHelper from "./helpers/bookHelper";
 import StyleHelper from "./helpers/styleHelper";
 export {
+  WordDecoration,
+  WordDecorationMap,
+  WordDecorationMode,
+  WordDecorationOptions,
+  WordDecorationType,
+  WordClickPayload,
+  WordSelectionResult,
+  WordSelectionScope,
+} from "./model/wordDecoration";
+export {
+  applyWordDecorations,
+  applyWordDecorationsBatched,
+  clearWordDecorations,
+  normalizeVocabularyToken,
+  refreshWordDecorations,
+  selectWordDecoration,
+} from "./utils/wordDecorationUtil";
+export {
   CacheRender,
   EpubRender,
   MobiRender,

@@ -112,7 +112,7 @@ export default class {
   /**
    * Trigger
    */
-  trigger(_name, _args = []) {
+  trigger(_name, _args: any[] = []) {
     // Errors
     if (typeof _name === "undefined" || _name === "") {
       console.warn("wrong name");

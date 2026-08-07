@@ -5,13 +5,8 @@ import terser from "@rollup/plugin-terser";
 import json from "@rollup/plugin-json";
 import { babel } from "@rollup/plugin-babel";
 import path from "path";
-const getDesktopOutputPath = (filename) => {
-  const basePath = "D:\\Project\\koodo-reader";
-  return path.join(basePath, "src", "assets", "lib", filename);
-};
-const getMobileOutputPath = (filename) => {
-  const basePath = "D:\\Project\\koodo-reader-expo";
-  return path.join(basePath, "assets", "lib", filename);
+const getOutputPath = (filename) => {
+  return path.resolve(process.cwd(), "dist", filename);
 };
 export default [
   {
@@ -19,7 +14,7 @@ export default [
     output: [
       {
         name: "Kookit",
-        file: getDesktopOutputPath("kookit.min.js"),
+        file: getOutputPath("kookit.min.js"),
         format: "es",
       },
     ],
@@ -55,7 +50,7 @@ export default [
     output: [
       {
         name: "Kookit",
-        file: getMobileOutputPath("kookit.min.txt"),
+        file: getOutputPath("kookit.min.txt"),
         format: "umd",
       },
     ],
@@ -112,7 +107,7 @@ export default [
     output: [
       {
         name: "Kookit",
-        file: getMobileOutputPath("kookit-mobile.min.js"),
+        file: getOutputPath("kookit-mobile.min.js"),
         format: "es",
       },
     ],
