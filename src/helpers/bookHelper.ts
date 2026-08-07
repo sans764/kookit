@@ -43,6 +43,7 @@ class BookHelper {
       isMobile: string;
       password: string;
       isConvertPDF: string;
+      pdfScale?: number;
       backgroundColor: string;
       isScannedPDF: string;
       ocrEngine: string;
@@ -193,6 +194,7 @@ class BookHelper {
       isDarkMode: string;
       password: string;
       isConvertPDF: string;
+      pdfScale?: number;
       platform?: string;
       backgroundColor: string;
       isScannedPDF: string;

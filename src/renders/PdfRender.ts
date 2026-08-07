@@ -19,6 +19,10 @@ import {
 } from "../utils/navigationUtil.js";
 import rangy from "rangy/lib/rangy-core.js";
 import "rangy/lib/rangy-textrange";
+import {
+  applyPdfScaleMultiplier,
+  normalizePdfScaleMultiplier,
+} from "../utils/pdfScaleUtil.js";
 declare var window: any;
 class PdfRender extends GeneralRender {
   pdfBuffer: ArrayBuffer;
@@ -32,7 +36,7 @@ class PdfRender extends GeneralRender {
   };
   password: string = "";
   pdfScale: number = 0;
-  scale: number = 1;
+  pdfScaleMultiplier: number = 1;
   backgroundColor: string;
   isScannedPDF: string;
   enablePDFSelectionOptimization: string = "no";
@@ -56,7 +60,7 @@ class PdfRender extends GeneralRender {
     this.pdfCrop = config.pdfCrop || { top: 0, bottom: 0, left: 0, right: 0 };
     this.isKeepPDFBackground = config.isKeepPDFBackground || "no";
     this.password = config.password || "";
-    this.scale = config.scale || 1;
+    this.pdfScaleMultiplier = normalizePdfScaleMultiplier(config.pdfScale);
     this.backgroundColor = config.backgroundColor || "#ffffff";
     this.isScannedPDF = config.isScannedPDF || "no";
     this.platform = config.platform || "web";
@@ -93,19 +97,7 @@ class PdfRender extends GeneralRender {
           ...this.chapterDocList,
         ];
       }
-      if (this.readerMode === "single" && Math.abs(this.scale) > 1.4) {
-        this.scale = 1.4;
-      }
-      if (
-        document.body.clientWidth * Math.abs(this.scale) -
-          document.body.clientWidth * 0.4 >
-          document.body.clientWidth &&
-        this.readerMode !== "double"
-      ) {
-        createIframe(element, this.isAllowScript, this.scale);
-      } else {
-        createIframe(element, this.isAllowScript);
-      }
+      createIframe(element, this.isAllowScript);
       let viewport: any;
       let templateIndex: number = 0;
       // 分层采样策略：最小化getDimension调用
@@ -1474,16 +1466,17 @@ class PdfRender extends GeneralRender {
     let viewWidth = doc.body.clientWidth;
     let viewHeight = this.element.clientHeight;
     if (this.readerMode === "double") {
-      let scale = this.readerMode === "double" ? 2 : 1;
+      const columnCount = 2;
       let section = Math.floor(this.element.clientWidth / 12);
       let gap = section % 2 === 0 ? section : section - 1;
-      viewWidth = (viewWidth - gap) / scale;
+      viewWidth = (viewWidth - gap) / columnCount;
     }
     let scale = Math.min(viewWidth / width, viewHeight / height);
     if (this.readerMode === "scroll") {
       viewWidth = viewWidth - 10;
       scale = viewWidth / width;
     }
+    scale = applyPdfScaleMultiplier(scale, this.pdfScaleMultiplier);
     this.pdfScale = scale;
     return scale;
   };
