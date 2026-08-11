@@ -74,4 +74,5 @@ export interface WordDecorationOptions {
     normalized: string
   ) => WordDecoration | undefined;
   onWordClick?: (payload: WordClickPayload) => void;
+  onWordDoubleClick?: () => void;
 }

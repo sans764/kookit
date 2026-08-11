@@ -15,6 +15,7 @@ const {
   normalizeVocabularyToken,
   selectWordDecoration,
 } = require("../src/utils/wordDecorationUtil.ts");
+const EventEmitter = require("../src/utils/EventEmitter.ts").default;
 
 const installDomGlobals = (window) => {
   global.NodeFilter = window.NodeFilter;
@@ -96,6 +97,18 @@ const decoration = (key, levelId, color) => ({
 test("normalizes Unicode quotes, dashes and case", () => {
   assert.equal(normalizeVocabularyToken("Don’t", "en"), "don't");
   assert.equal(normalizeVocabularyToken("RE–READING", "en"), "re-reading");
+});
+test("triggerNow dispatches interactive events synchronously", () => {
+  const emitter = new EventEmitter();
+  let payload = null;
+  emitter.on("word-click", (value) => {
+    payload = value;
+    return "handled";
+  });
+
+  const result = emitter.triggerNow("word-click", [{ surface: "went" }]);
+  assert.deepEqual(payload, { surface: "went" });
+  assert.equal(result, "handled");
 });
 test("text-color decorations prefer foreground color and refresh in place", () => {
   const dom = new JSDOM("<!doctype html><html><head></head><body><p>Books, books.</p></body></html>");
@@ -277,6 +290,43 @@ test("keeps filtered words clickable without showing their familiarity style", (
   );
   assert.equal(refreshed, 1);
   assert.equal(words[1].dataset.decoration, "none");
+});
+
+test("opens decorated words immediately and handles double-click separately", () => {
+  const dom = new JSDOM("<!doctype html><body><p>Books.</p></body>");
+  installDomGlobals(dom.window);
+  const doc = dom.window.document;
+  const clicks = [];
+  let doubleClicks = 0;
+
+  applyWordDecorations(
+    new Map([["books", decoration("en:book", 1, "#ef5350")]]),
+    doc,
+    {
+      language: "en",
+      onWordClick: (payload) => clicks.push(payload),
+      onWordDoubleClick: () => {
+        doubleClicks += 1;
+      },
+    }
+  );
+
+  const word = doc.querySelector(".kookit-vocab-word");
+  word.dispatchEvent(
+    new dom.window.MouseEvent("click", { bubbles: true, detail: 1 })
+  );
+  assert.equal(clicks.length, 1);
+  assert.equal(clicks[0].surface, "Books");
+
+  word.dispatchEvent(
+    new dom.window.MouseEvent("click", { bubbles: true, detail: 2 })
+  );
+  assert.equal(clicks.length, 1);
+
+  word.dispatchEvent(
+    new dom.window.MouseEvent("dblclick", { bubbles: true, detail: 2 })
+  );
+  assert.equal(doubleClicks, 1);
 });
 
 test("batched decoration reports the first visible batch and preserves text", async () => {

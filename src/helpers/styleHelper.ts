@@ -1,3 +1,5 @@
+import { resolveReaderFontWeight } from "../utils/fontWeightUtil";
+
 declare var window: any;
 class StyleHelper {
   // get default css for iframe
@@ -277,9 +279,12 @@ class StyleHelper {
       cssRules.push(`text-align: ${textAlign} !important`);
     }
 
-    // Font weight - only if bold is enabled
-    if (ConfigService.getReaderConfig("isBold") === "yes") {
-      cssRules.push("font-weight: bold !important");
+    // Explicit numeric weight wins over the legacy bold switch and font-name inference.
+    const fontWeight = resolveReaderFontWeight(
+      ConfigService.getReaderConfig("isBold")
+    );
+    if (fontWeight) {
+      cssRules.push(`font-weight: ${fontWeight} !important`);
     }
 
     // Force horizontal writing mode - only if vertical writing is not enabled

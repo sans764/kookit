@@ -11,7 +11,7 @@ const WORD_CLASS = "kookit-vocab-word";
 const STYLE_ID = "kookit-vocab-word-style";
 const DELEGATION_KEY = "__kookitWordDecorationDelegated";
 const CLICK_HANDLER_KEY = "__kookitWordDecorationClickHandler";
-const CLICK_TIMER_KEY = "__kookitWordDecorationClickTimer";
+const DOUBLE_CLICK_HANDLER_KEY = "__kookitWordDecorationDoubleClickHandler";
 const INSTANCE_COUNTER_KEY = "__kookitWordDecorationInstanceCounter";
 const WORD_INDEX = new WeakMap<
   Document,
@@ -231,10 +231,12 @@ const toClickPayload = (
 
 const registerWordClickDelegation = (
   doc: Document,
-  onWordClick?: (payload: WordClickPayload) => void
+  onWordClick?: (payload: WordClickPayload) => void,
+  onWordDoubleClick?: () => void
 ) => {
   const body = doc.body as any;
   body[CLICK_HANDLER_KEY] = onWordClick;
+  body[DOUBLE_CLICK_HANDLER_KEY] = onWordDoubleClick;
   if (body[DELEGATION_KEY]) return;
   body[DELEGATION_KEY] = true;
 
@@ -255,20 +257,25 @@ const registerWordClickDelegation = (
         handler?.(toClickPayload(target, event));
       };
 
-      if (event.ctrlKey || event.metaKey) {
-        invoke();
-        return;
-      }
-      clearTimeout(body[CLICK_TIMER_KEY]);
-      body[CLICK_TIMER_KEY] = setTimeout(invoke, 220);
+      // The first click opens the vocabulary popup immediately. A real
+      // double-click emits a second click with detail > 1, which is ignored.
+      if (event.detail > 1) return;
+      invoke();
     },
     true
   );
 
   body.addEventListener(
     "dblclick",
-    () => {
-      clearTimeout(body[CLICK_TIMER_KEY]);
+    (event: MouseEvent) => {
+      const target = (event.target as HTMLElement | null)?.closest?.(
+        "." + WORD_CLASS
+      );
+      if (!target) return;
+      const handler = body[DOUBLE_CLICK_HANDLER_KEY] as
+        | (() => void)
+        | undefined;
+      handler?.();
     },
     true
   );
@@ -407,7 +414,11 @@ export const applyWordDecorations = (
   const root = options.rootElement || doc.body;
   const language = options.language || "en";
   ensureStyles(doc);
-  registerWordClickDelegation(doc, options.onWordClick);
+  registerWordClickDelegation(
+    doc,
+    options.onWordClick,
+    options.onWordDoubleClick
+  );
   throwIfAborted(options.signal);
   const textNodes = collectTextNodes(doc, root);
 
@@ -434,7 +445,11 @@ export const applyWordDecorationsBatched = async (
   const language = options.language || "en";
   const batchSize = Math.max(1, Math.floor(options.batchSize || 750));
   ensureStyles(doc);
-  registerWordClickDelegation(doc, options.onWordClick);
+  registerWordClickDelegation(
+    doc,
+    options.onWordClick,
+    options.onWordDoubleClick
+  );
   throwIfAborted(options.signal);
   const textNodes = collectTextNodes(doc, root);
 

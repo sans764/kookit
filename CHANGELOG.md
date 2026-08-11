@@ -1,6 +1,21 @@
 # Changelog
 
-This file documents learning-edition changes maintained in `sans764/kookit`. The engine package version remains `1.0.4`; entries below identify the application release that consumes the changes.
+This file documents learning-edition changes maintained in `sans764/kookit`. The engine package version is `1.0.5`; entries below identify the application release that consumes the changes.
+## Engine 1.0.5 / Koodo Reader Learning Edition 2.4.10 — 2026-08-11
+
+### Adjustable reader font weight
+
+- Added numeric 100–900 font-weight normalization with 100-step snapping and invalid-value rejection.
+- Kept legacy `isBold=yes` compatibility at weight 700.
+- Applied explicit numeric weight after font-family inference so the user setting wins deterministically.
+- Added unit coverage for clamping, snapping, legacy values, CSS generation, and font-name inference.
+
+### Instant word interaction
+
+- Removed the delayed single-click timer from word-decoration delegation.
+- Added synchronous event-emitter dispatch for word click and double-click only, leaving legacy asynchronous events unchanged.
+- Kept the first click immediate, ignored the second click event, and emitted a dedicated double-click notification so native word selection remains usable.
+- Added regression coverage for synchronous dispatch, duplicate-click suppression, and double-click handling.
 
 ## Koodo Reader Learning Edition 2.4.9 — 2026-08-08
 

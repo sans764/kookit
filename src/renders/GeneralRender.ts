@@ -1720,7 +1720,11 @@ class GeneralRender extends EventEmitter {
       signal: controller.signal,
       onWordClick: (payload) => {
         options.onWordClick?.(payload);
-        this.trigger("word-click", [payload]);
+        this.triggerNow("word-click", [payload]);
+      },
+      onWordDoubleClick: () => {
+        options.onWordDoubleClick?.();
+        this.triggerNow("word-double-click", []);
       },
       onFirstBatch: (decoratedCount, processedNodeCount) => {
         options.onFirstBatch?.(decoratedCount, processedNodeCount);

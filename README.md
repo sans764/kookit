@@ -38,6 +38,13 @@ rendition.refreshWordDecorations(changedTerms);
 rendition.on("word-click", handler);
 ```
 
+### Reader typography
+
+- Resolves numeric font weights from 100 to 900 in 100-step increments.
+- Preserves legacy `isBold=yes` as weight 700 and treats `isBold=no` as no override.
+- Explicit numeric weight overrides font-family name inference; Light, Medium, Bold, and similar inference remains active when no explicit value is stored.
+- Uses the existing style key so global and per-book independent styles remain compatible without changing compressed Koodo configuration dependencies.
+
 ### Reader layout and pagination
 
 - Responsive pagination uses the actual container size without the previous fixed-width correction.
@@ -112,8 +119,8 @@ The synchronization script verifies source and destination paths before replacin
 
 ## Compatibility
 
-- Engine package version: `1.0.4`.
-- Current learning application compatibility: Koodo Reader Learning Edition `2.4.9`.
+- Engine package version: `1.0.5`.
+- Current learning application compatibility: Koodo Reader Learning Edition `2.4.10`.
 - Active engine branch head before this documentation update: `cee5744`.
 
 ## License

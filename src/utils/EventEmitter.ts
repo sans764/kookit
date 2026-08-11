@@ -172,6 +172,41 @@ export default class {
   }
 
   /**
+   * Trigger registered callbacks without the legacy timer. Interactive
+   * controls use this path so a busy renderer cannot delay user feedback.
+   */
+  triggerNow(_name, _args: any[] = []) {
+    if (typeof _name === "undefined" || _name === "") {
+      console.warn("wrong name");
+      return false;
+    }
+
+    const args = !(_args instanceof Array) ? [] : _args;
+    const names = this.resolveNames(_name);
+    const name = this.resolveName(names[0]);
+    let finalResult = null;
+
+    const invokeCallbacks = (callbacks: any[]) => {
+      callbacks.forEach((callback) => {
+        const result = callback.apply(this, args);
+        if (finalResult === null) finalResult = result;
+      });
+    };
+
+    if (name.namespace === "base") {
+      for (const namespace in this.callbacks) {
+        const callbacks = this.callbacks[namespace]?.[name.value];
+        if (callbacks instanceof Array) invokeCallbacks(callbacks);
+      }
+    } else {
+      const callbacks = this.callbacks[name.namespace]?.[name.value];
+      if (callbacks instanceof Array) invokeCallbacks(callbacks);
+    }
+
+    return finalResult;
+  }
+
+  /**
    * Resolve names
    */
   resolveNames(_names) {
