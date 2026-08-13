@@ -24,7 +24,11 @@ const fixture = path.resolve(
   "learning",
   "large-chapter.html"
 );
-const html = fs.readFileSync(fixture, "utf8");
+const fixtureParagraphs = 2500;
+const paragraph = "The reader studies unfamiliar words and remembers useful examples every day.";
+const html = fs.existsSync(fixture)
+  ? fs.readFileSync(fixture, "utf8")
+  : `<!doctype html><html><body>${Array.from({ length: fixtureParagraphs }, (_, index) => `<p data-index="${index}">${paragraph}</p>`).join("")}</body></html>`;
 const dom = new JSDOM(html, { pretendToBeVisual: true });
 global.NodeFilter = dom.window.NodeFilter;
 global.DOMException = dom.window.DOMException;
@@ -85,7 +89,7 @@ applyWordDecorationsBatched(new Map(), doc, {
   clearWordDecorations(doc);
   assert.equal(doc.body.textContent, originalText);
   const result = {
-    fixtureParagraphs: 2500,
+    fixtureParagraphs,
     batchSize: 750,
     decoratedCount,
     firstBatchMs: Number(firstBatchMs.toFixed(1)),
